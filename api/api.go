@@ -80,8 +80,8 @@ func postAccountRooms(w http.ResponseWriter, r *http.Request) {
 }
 
 type getAccountRoomResponseModel struct {
-	CreatorId    uint64   `json:"creator-id"`
-	MemberIds    []uint64 `json:"member-ids"`
+	CreatorId    string   `json:"creator-id"`
+	MemberIds    []string `json:"member-ids"`
 	MembersCount uint64   `json:"members-count"`
 }
 
@@ -91,7 +91,7 @@ func getAccountRoom(w http.ResponseWriter, r *http.Request) {
 }
 
 type putAccountRoomRequestModel struct {
-	MemberIds []uint64 `json:"member-ids"`
+	MemberIds []string `json:"member-ids"`
 }
 
 // putAccountRoom allows to add and remove room members.
@@ -101,7 +101,7 @@ func putAccountRoom(w http.ResponseWriter, r *http.Request) {
 
 type getMessagesResponseModel struct {
 	Messages []struct {
-		AuthorId uint64 `json:"author-id"`
+		AuthorId string `json:"author-id"`
 		Text     string `json:"text"`
 	} `json:"messages"`
 }
