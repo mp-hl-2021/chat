@@ -9,7 +9,7 @@ import (
 func NewRouter() http.Handler {
 	router := mux.NewRouter()
 
-	router.HandleFunc("/postSignup", postSignup).Methods(http.MethodPost)
+	router.HandleFunc("/signup", postSignup).Methods(http.MethodPost)
 	router.HandleFunc("/signin", postSignin).Methods(http.MethodPost)
 
 	router.HandleFunc("/accounts/{id}", getAccount).Methods(http.MethodGet)
