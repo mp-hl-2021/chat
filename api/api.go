@@ -25,6 +25,11 @@ func NewRouter() http.Handler {
 	return router
 }
 
+type postSignupRequestModel struct {
+	Login    string `json:"login"`
+	Password string `json:"password"`
+}
+
 // postSignup handles request for a new account creation.
 func postSignup(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
@@ -35,9 +40,18 @@ func postSignin(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+type getAccountResponseModel struct {
+	Id string `json:"id"`
+}
+
 // getAccount handles request for user's account information.
 func getAccount(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
+}
+
+type getAccountRoomsResponseModel struct {
+	RoomIds     []uint64 `json:"room-ids"`
+	RoomsNumber uint64   `json:"rooms-number"`
 }
 
 // getAccountRooms returns user's rooms.
@@ -50,9 +64,19 @@ func postAccountRooms(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+type getAccountRoomResponseModel struct {
+	CreatorId    uint64   `json:"creator-id"`
+	MemberIds    []uint64 `json:"member-ids"`
+	MembersCount uint64   `json:"members-count"`
+}
+
 // getAccountRoom returns room info.
 func getAccountRoom(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
+}
+
+type putAccountRoomRequestModel struct {
+	MemberIds []uint64 `json:"member-ids"`
 }
 
 // putAccountRoom allows to add and remove room members.
@@ -60,9 +84,20 @@ func putAccountRoom(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+type getMessagesResponseModel struct {
+	Messages []struct {
+		AuthorId uint64 `json:"author-id"`
+		Text     string `json:"text"`
+	} `json:"messages"`
+}
+
 // getMessages returns messages for the selected room.
 func getMessages(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
+}
+
+type postMessagesRequestModel struct {
+	Text string `json:"text"`
 }
 
 // postMessages allows user to create a new message.
