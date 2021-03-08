@@ -1,16 +1,13 @@
 package main
 
 import (
-	"encoding/json"
+	"github.com/mp-hl-2021/chat/api"
 	"net/http"
 	"time"
-
-	"github.com/gorilla/mux"
 )
 
 func main() {
-	router := mux.NewRouter()
-	router.HandleFunc("/test", getTest).Methods(http.MethodGet)
+	router := api.NewRouter()
 
 	server := http.Server{
 		Addr:         "localhost:8080",
@@ -25,15 +22,3 @@ func main() {
 	}
 }
 
-func getTest(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	o := struct {
-		Hello string `json:"hello"`
-	}{
-		Hello: "world",
-	}
-	if err := json.NewEncoder(w).Encode(o); err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-}
