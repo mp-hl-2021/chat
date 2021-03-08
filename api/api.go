@@ -1,6 +1,8 @@
 package api
 
 import (
+	"encoding/json"
+	"fmt"
 	"github.com/gorilla/mux"
 	"net/http"
 )
@@ -32,12 +34,25 @@ type postSignupRequestModel struct {
 
 // postSignup handles request for a new account creation.
 func postSignup(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusNotImplemented)
+	var m postSignupRequestModel
+	if err := json.NewDecoder(r.Body).Decode(&m); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	// todo
+	location := fmt.Sprintf("/accounts/%s", "1")
+	w.Header().Set("Location", location)
+	w.WriteHeader(http.StatusCreated)
 }
 
 // postSignin handles login request for existing user.
 func postSignin(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusNotImplemented)
+	var m postSignupRequestModel
+	if err := json.NewDecoder(r.Body).Decode(&m); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	// todo
 }
 
 type getAccountResponseModel struct {
