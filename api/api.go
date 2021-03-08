@@ -4,25 +4,36 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/gorilla/mux"
+	"github.com/mp-hl-2021/chat/usecases"
 	"net/http"
 )
 
+type Api struct {
+	AccountUseCases usecases.AccountUseCasesInterface
+}
+
+func NewApi(a usecases.AccountUseCasesInterface) *Api {
+	return &Api{
+		AccountUseCases: a,
+	}
+}
+
 // NewRouter creates all endpoint for chat app.
-func NewRouter() http.Handler {
+func (a *Api) Router() http.Handler {
 	router := mux.NewRouter()
 
-	router.HandleFunc("/signup", postSignup).Methods(http.MethodPost)
-	router.HandleFunc("/signin", postSignin).Methods(http.MethodPost)
+	router.HandleFunc("/signup", a.postSignup).Methods(http.MethodPost)
+	router.HandleFunc("/signin", a.postSignin).Methods(http.MethodPost)
 
-	router.HandleFunc("/accounts/{id}", getAccount).Methods(http.MethodGet)
+	router.HandleFunc("/accounts/{id}", a.getAccount).Methods(http.MethodGet)
 
-	router.HandleFunc("/accounts/{id}/rooms", getAccountRooms).Methods(http.MethodGet)
-	router.HandleFunc("/accounts/{id}/rooms", postAccountRooms).Methods(http.MethodPost)
-	router.HandleFunc("/accounts/{account_id}/rooms/{room_id}", getAccountRoom).Methods(http.MethodGet)
-	router.HandleFunc("/accounts/{account_id}/rooms/{room_id}", putAccountRoom).Methods(http.MethodPut)
+	router.HandleFunc("/accounts/{id}/rooms", a.getAccountRooms).Methods(http.MethodGet)
+	router.HandleFunc("/accounts/{id}/rooms", a.postAccountRooms).Methods(http.MethodPost)
+	router.HandleFunc("/accounts/{account_id}/rooms/{room_id}", a.getAccountRoom).Methods(http.MethodGet)
+	router.HandleFunc("/accounts/{account_id}/rooms/{room_id}", a.putAccountRoom).Methods(http.MethodPut)
 
-	router.HandleFunc("/accounts/{account_id}/rooms/{room_id}/messages", getMessages).Methods(http.MethodGet)
-	router.HandleFunc("/accounts/{account_id}/rooms/{room_id}/messages", postMessages).Methods(http.MethodPost)
+	router.HandleFunc("/accounts/{account_id}/rooms/{room_id}/messages", a.getMessages).Methods(http.MethodGet)
+	router.HandleFunc("/accounts/{account_id}/rooms/{room_id}/messages", a.postMessages).Methods(http.MethodPost)
 
 	return router
 }
@@ -33,26 +44,41 @@ type postSignupRequestModel struct {
 }
 
 // postSignup handles request for a new account creation.
-func postSignup(w http.ResponseWriter, r *http.Request) {
+func (a *Api) postSignup(w http.ResponseWriter, r *http.Request) {
 	var m postSignupRequestModel
 	if err := json.NewDecoder(r.Body).Decode(&m); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	// todo
-	location := fmt.Sprintf("/accounts/%s", "1")
+
+	acc, err := a.AccountUseCases.CreateAccount(m.Login, m.Password)
+	if err != nil { // todo: map domain errors to http error codes
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	location := fmt.Sprintf("/accounts/%s", acc.Id)
 	w.Header().Set("Location", location)
 	w.WriteHeader(http.StatusCreated)
 }
 
 // postSignin handles login request for existing user.
-func postSignin(w http.ResponseWriter, r *http.Request) {
+func (a *Api) postSignin(w http.ResponseWriter, r *http.Request) {
 	var m postSignupRequestModel
 	if err := json.NewDecoder(r.Body).Decode(&m); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	// todo
+
+	token, err := a.AccountUseCases.LoginToAccount(m.Login, m.Password)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/jwt")
+	w.Write([]byte(token))
+	w.WriteHeader(http.StatusOK)
 }
 
 type getAccountResponseModel struct {
@@ -60,7 +86,7 @@ type getAccountResponseModel struct {
 }
 
 // getAccount handles request for user's account information.
-func getAccount(w http.ResponseWriter, r *http.Request) {
+func (a *Api) getAccount(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -70,12 +96,12 @@ type getAccountRoomsResponseModel struct {
 }
 
 // getAccountRooms returns user's rooms.
-func getAccountRooms(w http.ResponseWriter, r *http.Request) {
+func (a *Api) getAccountRooms(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
 // postAccountRooms creates a new room for requesting user.
-func postAccountRooms(w http.ResponseWriter, r *http.Request) {
+func (a *Api) postAccountRooms(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -86,7 +112,7 @@ type getAccountRoomResponseModel struct {
 }
 
 // getAccountRoom returns room info.
-func getAccountRoom(w http.ResponseWriter, r *http.Request) {
+func (a *Api) getAccountRoom(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -95,7 +121,7 @@ type putAccountRoomRequestModel struct {
 }
 
 // putAccountRoom allows to add and remove room members.
-func putAccountRoom(w http.ResponseWriter, r *http.Request) {
+func (a *Api) putAccountRoom(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -107,7 +133,7 @@ type getMessagesResponseModel struct {
 }
 
 // getMessages returns messages for the selected room.
-func getMessages(w http.ResponseWriter, r *http.Request) {
+func (a *Api) getMessages(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -116,6 +142,6 @@ type postMessagesRequestModel struct {
 }
 
 // postMessages allows user to create a new message.
-func postMessages(w http.ResponseWriter, r *http.Request) {
+func (a *Api) postMessages(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
