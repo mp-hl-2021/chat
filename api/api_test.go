@@ -1,18 +1,19 @@
 package api
 
 import (
+	"github.com/mp-hl-2021/chat/usecases"
+
 	"bytes"
 	"encoding/json"
 	"errors"
-	"github.com/mp-hl-2021/chat/usecases"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 )
 
-type AccountUseCasesMock struct {}
+type AccountUseCasesFake struct {}
 
-func (AccountUseCasesMock) CreateAccount(login, password string) (usecases.Account, error) {
+func (AccountUseCasesFake) CreateAccount(login, password string) (usecases.Account, error) {
 	switch login {
 	case "alice":
 		return usecases.Account{
@@ -23,19 +24,23 @@ func (AccountUseCasesMock) CreateAccount(login, password string) (usecases.Accou
 	}
 }
 
-func (AccountUseCasesMock) GetAccountById(id string) (usecases.Account, error) {
+func (AccountUseCasesFake) GetAccountById(id string) (usecases.Account, error) {
 	panic("implement me")
 }
 
-func (AccountUseCasesMock) LoginToAccount(login, password string) (string, error) {
+func (AccountUseCasesFake) LoginToAccount(login, password string) (string, error) {
 	if login == "alice" && password == "123" {
 		return "token", nil
 	}
 	return "", errors.New("invalid login or password")
 }
 
+func (a *AccountUseCasesFake) Authenticate(token string) (string, error) {
+	panic("implement me")
+}
+
 func Test_postSignup(t *testing.T) {
-	service := NewApi(&AccountUseCasesMock{})
+	service := NewApi(&AccountUseCasesFake{})
 	router := service.Router()
 
 	t.Run("failure on invalid json", func(t *testing.T) {
@@ -83,7 +88,7 @@ func Test_postSignup(t *testing.T) {
 }
 
 func Test_postSignin(t *testing.T) {
-	service := NewApi(&AccountUseCasesMock{})
+	service := NewApi(&AccountUseCasesFake{})
 	router := service.Router()
 
 	t.Run("failure on invalid json", func(t *testing.T) {

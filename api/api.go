@@ -1,11 +1,15 @@
 package api
 
 import (
+	"github.com/mp-hl-2021/chat/usecases"
+
+	"github.com/gorilla/mux"
+
+	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/gorilla/mux"
-	"github.com/mp-hl-2021/chat/usecases"
 	"net/http"
+	"strings"
 )
 
 type Api struct {
@@ -25,7 +29,7 @@ func (a *Api) Router() http.Handler {
 	router.HandleFunc("/signup", a.postSignup).Methods(http.MethodPost)
 	router.HandleFunc("/signin", a.postSignin).Methods(http.MethodPost)
 
-	router.HandleFunc("/accounts/{id}", a.getAccount).Methods(http.MethodGet)
+	router.HandleFunc("/accounts/{id}", a.authorize(a.getAccount)).Methods(http.MethodGet)
 
 	router.HandleFunc("/accounts/{id}/rooms", a.getAccountRooms).Methods(http.MethodGet)
 	router.HandleFunc("/accounts/{id}/rooms", a.postAccountRooms).Methods(http.MethodPost)
@@ -78,7 +82,6 @@ func (a *Api) postSignin(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/jwt")
 	w.Write([]byte(token))
-	w.WriteHeader(http.StatusOK)
 }
 
 type getAccountResponseModel struct {
@@ -87,7 +90,31 @@ type getAccountResponseModel struct {
 
 // getAccount handles request for user's account information.
 func (a *Api) getAccount(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusNotImplemented)
+	accountId, ok := r.Context().Value("account_id").(string) // todo: move to constant
+	if !ok {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	vars := mux.Vars(r)
+	id, ok := vars["id"]
+	if !ok {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	if id != accountId { // todo: need an authorization module
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+	acc, err := a.AccountUseCases.GetAccountById(accountId)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	m := getAccountResponseModel{Id: acc.Id}
+	if err := json.NewEncoder(w).Encode(m); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 }
 
 type getAccountRoomsResponseModel struct {
@@ -144,4 +171,23 @@ type postMessagesRequestModel struct {
 // postMessages allows user to create a new message.
 func (a *Api) postMessages(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
+}
+
+func (a *Api) authorize(handler http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		bearHeader := r.Header.Get("Authorization")
+		strArr := strings.Split(bearHeader, " ")
+		if len(strArr) != 2 {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		token := strArr[1]
+		id, err := a.AccountUseCases.Authenticate(token)
+		if err != nil {
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+		ctx := context.WithValue(r.Context(), "account_id", id)
+		handler(w, r.WithContext(ctx))
+	}
 }
