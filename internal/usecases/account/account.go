@@ -1,8 +1,8 @@
-package usecases
+package account
 
 import (
-	"github.com/mp-hl-2021/chat/accountstorage"
-	"github.com/mp-hl-2021/chat/auth"
+	"github.com/mp-hl-2021/chat/internal/domain/account"
+	"github.com/mp-hl-2021/chat/internal/service/token"
 
 	"golang.org/x/crypto/bcrypt"
 
@@ -31,21 +31,20 @@ type Account struct {
 	Id string
 }
 
-type AccountUseCasesInterface interface {
+type Interface interface {
 	CreateAccount(login, password string) (Account, error)
 	GetAccountById(id string) (Account, error)
 
-	// todo: move to a separate interface
 	LoginToAccount(login, password string) (string, error)
 	Authenticate(token string) (string, error)
 }
 
-type AccountUseCases struct {
-	AccountStorage accountstorage.Interface
-	Auth           auth.Interface
+type UseCases struct {
+	AccountStorage account.Interface
+	Auth           token.Interface
 }
 
-func (a *AccountUseCases) CreateAccount(login, password string) (Account, error) {
+func (a *UseCases) CreateAccount(login, password string) (Account, error) {
 	if err := validateLogin(login); err != nil {
 		return Account{}, err
 	}
@@ -56,7 +55,7 @@ func (a *AccountUseCases) CreateAccount(login, password string) (Account, error)
 	if err != nil {
 		return Account{}, err
 	}
-	acc, err := a.AccountStorage.CreateAccount(accountstorage.Credentials{
+	acc, err := a.AccountStorage.CreateAccount(account.Credentials{
 		Login:    login,
 		Password: string(hashedPassword),
 	})
@@ -66,7 +65,7 @@ func (a *AccountUseCases) CreateAccount(login, password string) (Account, error)
 	return Account{Id: acc.Id}, nil
 }
 
-func (a *AccountUseCases) GetAccountById(id string) (Account, error) {
+func (a *UseCases) GetAccountById(id string) (Account, error) {
 	acc, err := a.AccountStorage.GetAccountById(id)
 	if err != nil {
 		return Account{}, err
@@ -74,7 +73,7 @@ func (a *AccountUseCases) GetAccountById(id string) (Account, error) {
 	return Account{Id: acc.Id}, err
 }
 
-func (a *AccountUseCases) LoginToAccount(login, password string) (string, error) {
+func (a *UseCases) LoginToAccount(login, password string) (string, error) {
 	if err := validateLogin(login); err != nil {
 		return "", err
 	}
@@ -86,16 +85,17 @@ func (a *AccountUseCases) LoginToAccount(login, password string) (string, error)
 		return "", err
 	}
 	if err := bcrypt.CompareHashAndPassword([]byte(acc.Credentials.Password), []byte(password)); err != nil {
+		// todo: check error type. return invalid login or password
 		return "", err
 	}
-	token, err := a.Auth.IssueToken(acc.Id)
+	t, err := a.Auth.IssueToken(acc.Id)
 	if err != nil {
 		return "", err
 	}
-	return token, err
+	return t, err
 }
 
-func (a *AccountUseCases) Authenticate(token string) (string, error) {
+func (a *UseCases) Authenticate(token string) (string, error) {
 	return a.Auth.UserIdByToken(token)
 }
 

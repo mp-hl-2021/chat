@@ -1,7 +1,7 @@
-package api
+package httpapi
 
 import (
-	"github.com/mp-hl-2021/chat/usecases"
+	"github.com/mp-hl-2021/chat/internal/usecases/account"
 
 	"bytes"
 	"encoding/json"
@@ -11,20 +11,20 @@ import (
 	"testing"
 )
 
-type AccountUseCasesFake struct {}
+type AccountUseCasesFake struct{}
 
-func (AccountUseCasesFake) CreateAccount(login, password string) (usecases.Account, error) {
+func (AccountUseCasesFake) CreateAccount(login, password string) (account.Account, error) {
 	switch login {
 	case "alice":
-		return usecases.Account{
+		return account.Account{
 			Id: "1",
 		}, nil
 	default:
-		return usecases.Account{}, errors.New("failed to create an account")
+		return account.Account{}, errors.New("failed to create an account")
 	}
 }
 
-func (AccountUseCasesFake) GetAccountById(id string) (usecases.Account, error) {
+func (AccountUseCasesFake) GetAccountById(id string) (account.Account, error) {
 	panic("implement me")
 }
 
@@ -40,7 +40,7 @@ func (a *AccountUseCasesFake) Authenticate(token string) (string, error) {
 }
 
 func Test_postSignup(t *testing.T) {
-	service := NewApi(&AccountUseCasesFake{})
+	service := NewApi(&AccountUseCasesFake{}, nil, nil)
 	router := service.Router()
 
 	t.Run("failure on invalid json", func(t *testing.T) {
@@ -81,14 +81,14 @@ func Test_postSignup(t *testing.T) {
 		assertStatusCode(t, resp.Code, http.StatusCreated)
 
 		location := resp.Header().Get("Location")
-		if  location != "/accounts/1" {
+		if location != "/accounts/1" {
 			t.Errorf("Server MUST return %s Location header, but %s given", "/accounts/1", location)
 		}
 	})
 }
 
 func Test_postSignin(t *testing.T) {
-	service := NewApi(&AccountUseCasesFake{})
+	service := NewApi(&AccountUseCasesFake{}, nil, nil)
 	router := service.Router()
 
 	t.Run("failure on invalid json", func(t *testing.T) {

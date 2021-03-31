@@ -1,11 +1,4 @@
-package accountstorage
-
-import "errors"
-
-var (
-	ErrNotFound = errors.New("not found")
-	ErrAlreadyExist = errors.New("already exist")
-)
+package account
 
 type Account struct {
 	Id string

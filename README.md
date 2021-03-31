@@ -6,11 +6,11 @@ How to Test
 
 Create new account
 
-    curl -v -X POST localhost:8080/signin -d '{"login": "<your login here>", "password": "<password>"}'
+    curl -v -X POST localhost:8080/signup -d '{"login": "<your login here>", "password": "<password>"}'
 
 Login and retrieve token
 
-    curl -v -X POST localhost:8080/signup -d '{"login": "<your login here>", "password": "<password>"}'
+    curl -v -X POST localhost:8080/signin -d '{"login": "<your login here>", "password": "<password>"}'
 
 Get account id from new account response headers or JWT
 
