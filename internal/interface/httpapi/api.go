@@ -1,17 +1,17 @@
 package httpapi
 
 import (
+	"github.com/mp-hl-2021/chat/internal/interface/prom"
 	"github.com/mp-hl-2021/chat/internal/usecases/account"
 	"github.com/mp-hl-2021/chat/internal/usecases/message"
 	"github.com/mp-hl-2021/chat/internal/usecases/room"
 
 	"github.com/gorilla/mux"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 
-	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strings"
 )
 
 const (
@@ -50,6 +50,12 @@ func (a *Api) Router() http.Handler {
 
 	router.HandleFunc("/rooms/"+roomsIdUrlPathKey+"/messages", a.authenticate(a.getMessages)).Methods(http.MethodGet)
 	router.HandleFunc("/rooms/"+roomsIdUrlPathKey+"/messages", a.authenticate(a.postMessages)).Methods(http.MethodPost)
+
+	router.Handle("/metrics", promhttp.Handler())
+
+	router.Use(prom.Measurer())
+	router.Use(a.logger)
+	fmt.Println("test")
 
 	return router
 }
@@ -327,24 +333,5 @@ func (a *Api) postMessages(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
-	}
-}
-
-func (a *Api) authenticate(handler http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		bearHeader := r.Header.Get("Authorization")
-		strArr := strings.Split(bearHeader, " ")
-		if len(strArr) != 2 {
-			w.WriteHeader(http.StatusBadRequest)
-			return
-		}
-		token := strArr[1]
-		id, err := a.AccountUseCases.Authenticate(token)
-		if err != nil {
-			w.WriteHeader(http.StatusUnauthorized)
-			return
-		}
-		ctx := context.WithValue(r.Context(), accountIdContextKey, id)
-		handler(w, r.WithContext(ctx))
 	}
 }

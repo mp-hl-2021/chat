@@ -22,7 +22,7 @@ var (
 
 const (
 	minLoginLength    = 6
-	maxLoginLength    = 20
+	maxLoginLength    = 32
 	minPasswordLength = 14
 	maxPasswordLength = 48
 )
